@@ -1,0 +1,36 @@
+[Unit]
+Description=MarsMode - Tesla CAN bus automation for keeping vehicle awake
+Documentation=https://github.com/spleck/panda/tree/master/examples/marsmode
+After=network.target systemd-udev-trigger.service
+Wants=systemd-udev-trigger.service
+
+[Service]
+Type=simple
+User=%I
+WorkingDirectory=/home/%I/panda/examples/marsmode
+Environment="PATH=/home/%I/panda/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+Environment="MARS_MODE=advanced"
+
+# Main executable
+ExecStart=/home/%I/panda/bin/python -m marsmode ${MARS_MODE}
+
+# Restart configuration
+Restart=always
+RestartSec=5
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=marsmode
+
+# Security hardening (optional - uncomment if needed)
+# NoNewPrivileges=true
+# ProtectSystem=strict
+# ProtectHome=true
+# ReadWritePaths=/home/%I/panda/examples/marsmode
+
+[Install]
+WantedBy=multi-user.target

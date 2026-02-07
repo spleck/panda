@@ -1,136 +1,91 @@
-
 # Mars Mode Scripts
 
-Scripts to demonstrate simulating button inputs via CAN bus signals in your Tesla Model 3, Y, and newer S and X.
+Scripts to simulate button inputs via CAN bus signals in your Tesla Model 3, Y, and newer S and X. Keeps the vehicle awake by sending periodic CAN messages via a comma.ai Panda device.
 
-You will find the sample mars mode scripts in [examples/marsmode](https://github.com/spleck/panda/tree/master/examples/marsmode)
+**📖 Full documentation:** See [examples/marsmode/README.md](examples/marsmode/README.md)
 
+## Quick Links
 
-# Bill of Materials
+- [Installation Guide](examples/marsmode/README.md#installation)
+- [Usage Examples](examples/marsmode/README.md#usage)
+- [Available Modes](examples/marsmode/README.md#available-modes)
+- [Configuration](examples/marsmode/README.md#configuration)
 
-* 1x Raspberry Pi4+Case
-* 1x USB-C to USB-A Cable for usage
-* 1x [USB-A to USB-A Cable](https://a.co/d/4NF5Dub) for flashing firmware (or flash in car powered by ODB)
+## Bill of Materials
+
+* 1x Raspberry Pi 4 + Case
+* 1x USB-C to USB-A Cable
+* 1x [USB-A to USB-A Cable](https://a.co/d/4NF5Dub) for flashing firmware
 * 1x MicroSD Memory Card
 * 1x [White Comma Panda](https://www.comma.ai/shop/panda)
-* 1x [ODB Adapter Cable](https://enhauto.com/product/tesla-gen1-obd-cable)
+* 1x [OBD Adapter Cable](https://enhauto.com/product/tesla-gen1-obd-cable)
 
-# Raspberry Pi4 + PiOS + White Comma Panda Install
+## Quick Install (PiOS)
 
-## Operating System image onto MicroSD Card
+```bash
+curl https://spleck.net/mars-mode-install | bash
+```
 
-Go to [raspberrypi.com](http://raspberrypi.com), click Software and download Raspberry Pi Imager for MacOS, Windows or Ubuntu
+For verbose output:
+```bash
+curl https://spleck.net/mars-mode-install | V=1 bash
+```
 
-Open Imager, Select Pi4, Select Other -> Raspberry PiOS Lite (64-bit), Select your Memory Card and Click Next
+## Quick Start
 
-Note: This was tested and confirmed working with Pi3b + PiOS (Legacy) 64-bit Lite as well
+After installation:
 
-OS Customization Settings: hostname, user+password, wireless, and locale
-
-Click Write and Confirm Overwriting All Files on the memory card
-
-When complete, remove memory card, place into pi4, attach white comma panda via usb, and power up the pi.
-
-# Installing the Software 
-
-Login via ssh from remote or using keyboard and mouse locally
-
-# Automated install for PiOS:
-
-curl <https://spleck.net/mars-mode-install> | bash
-
-That's it, good luck! If you run into trouble, or just want to see more detail as it works:
-
-curl <https://spleck.net/mars-mode-install> | V=1 bash
-
-# Manual PiOS / Debian / Ubuntu Install Steps
-
-## Install system dependencies 
-
-sudo apt-get update
-
-sudo apt-get install -y dfu-util gcc-arm-none-eabi python3-pip libffi-dev git scons screen
-
-## Clone spleck's panda repo for Mars Mode 
-
-git clone <https://github.com/spleck/panda.git>
-
-## setup and activate the local python environment 
-
-python -m venv ~/panda/
-
-export PATH=~/panda/bin:$PATH
-
-cd ~/panda
-
-## install panda external requirements 
-
-pip install -r requirements.txt
-
-## install panda software 
-
-python setup.py install
-
-## add device mappings for udev 
-
-sudo tee /etc/udev/rules.d/11-panda.rules <<EOF
-
-SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddcc", MODE="0666"
-
-SUBSYSTEM=="usb", ATTRS{idVendor}=="bbaa", ATTRS{idProduct}=="ddee", MODE="0666"
-
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", MODE="0666"
-
-EOF
-
-sudo udevadm control --reload-rules && sudo udevadm trigger
-
-## build custom firmware so we can enable write mode 
-
-cd board 
-
-scons -u
-
-## add fixup symlink (not sure how else to fix this?) 
-
-for dir in ~/panda/lib/python*/site-packages/pandacan*; do ln -s ~/panda/board $dir/board; done
-
-## dfu / recovery if needed 
-
-./recover.py
-
-## flash with our firmware 
-
-./flash.py
-
-## Launch Mars Mode Panda Agent at Startup 
-
-grep -v ^exit /etc/rc.local >/tmp/.rcl
-
-echo screen -d -m -S mars /home/$USER/panda/examples/marsmode/marsmode-active.sh >>/tmp/.rcl
-
-echo exit 0 >>/tmp/.rcl
-
-cat /tmp/.rcl | sudo tee /etc/rc.local
-
-## Add overlay to boot config to allow data on the usb-c power connection from the panda: 
-
-echo dtoverlay=dwc2,dr_mode=host | sudo tee -a /boot/firmware/config.txt
-
-## Configure Active Mars Mode Script 
-
+```bash
+# Run a mode directly
 cd ~/panda/examples/marsmode
+python -m marsmode --mode media-volume-basic
 
-./marsmode-active.sh marsmode-mediavolume-basic.py
+# Or use the wrapper
+./scripts/marsmode.sh start media-volume-basic
 
-# ALL DONE! Shut down and move to car
+# Enable auto-start on boot
+sudo systemctl enable marsmode@media-volume-basic
+```
 
-sudo halt
+## Project Structure
 
-# Comma.ai and Panda Details
+```
+examples/marsmode/
+├── marsmode/              # Python package
+│   ├── __main__.py        # Entry point
+│   ├── cli.py             # Command-line interface
+│   ├── core.py            # Shared Panda controller
+│   └── modes.py           # Mode implementations
+├── scripts/               # Shell scripts
+│   ├── install.sh         # System installer
+│   └── marsmode.sh        # Wrapper script
+├── config/
+│   └── marsmode.yaml      # Configuration
+├── systemd/
+│   └── marsmode@.service  # Systemd service
+└── README.md              # Full documentation
+```
 
-For inforamtion about comma panda visit [comma.ai panda](https://github.com/commaai/panda)
+## Manual Installation
 
-# Licensing
+See [examples/marsmode/README.md](examples/marsmode/README.md#manual-install) for detailed manual install steps.
+
+## Available Modes
+
+| Mode | Description |
+|------|-------------|
+| `media-volume-basic` | Simple volume up/down every 4-8 seconds |
+| `media-volume` | Volume control synced to Tesla clock ticks |
+| `speed-basic` | AP speed adjust every 4-8 seconds |
+| `speed` | Speed adjust synced to Tesla clock ticks |
+| `media-back` | Media back button every 5 seconds (Streaming app only) |
+| `advanced` | Full-featured with mode switching and park detection |
+
+## Credits
+
+- Original panda software by [comma.ai](https://github.com/commaai/panda)
+- Mars Mode extensions by spleck
+
+## License
 
 panda software and mars mode scripting are released under the MIT license unless otherwise specified.

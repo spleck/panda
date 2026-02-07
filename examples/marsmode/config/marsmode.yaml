@@ -1,0 +1,43 @@
+# MarsMode Configuration File
+# 
+# This is an example configuration file for MarsMode.
+# Copy this to /etc/marsmode.yaml or ~/.config/marsmode/config.yaml
+# and modify as needed.
+
+# Operating mode
+# Options: media-volume-basic, media-volume, speed-basic, speed, media-back, advanced
+mode: advanced
+
+# CAN bus settings
+can_speed_kbps: 500
+
+# Panda safety mode
+# Options: alloutput, silent
+safety_mode: alloutput
+
+# Verbose logging
+verbose: false
+
+# Dry run mode (for testing without sending CAN messages)
+dry_run: false
+
+# Volume mode settings
+volume_interval_min: 4.0      # Minimum interval between volume commands (seconds)
+volume_interval_max: 8.0      # Maximum interval between volume commands (seconds)
+volume_delay: 0.3             # Delay between volume down and up (seconds)
+
+# Speed mode settings
+speed_interval_min: 4.0       # Minimum interval between speed commands (seconds)
+speed_interval_max: 8.0       # Maximum interval between speed commands (seconds)
+speed_delay: 0.3              # Delay between speed down and up (seconds)
+
+# Clock-based mode settings
+clock_tick_steps: 8           # Number of clock ticks before sending commands
+media_back_steps: 5           # Number of clock ticks for media back mode
+
+# Advanced mode settings
+startup_signal_count: 4       # Number of signals during startup
+startup_signal_delay: 0.5     # Delay between startup signals (seconds)
+double_tap_min: 0.20          # Minimum time between taps to count as double-tap (seconds)
+double_tap_max: 0.75          # Maximum time between taps to count as double-tap (seconds)
+tickle_interval: 5            # Number of clock ticks between tickle signals
